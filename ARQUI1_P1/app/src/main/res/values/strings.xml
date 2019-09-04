@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Proyecto 1 - Arqui</string>
+    <string name="btn_draw">Nuevo dibujo</string>
+    <string name="btn_galery">Galería</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="txt_nombre_dibujo">Ingrese un nombre para el dibujo</string>
+    <string name="btn_empezar">Continuar</string>
+    <string name="title_activity_main3">Main3Activity</string>
+    <string name="title_lapiz">Lapiz</string>
+    <string name="title_lapiz_rojo">Rojo</string>
+    <string name="title_lapiz_azul">Azul</string>
+    <string name="title_borrador">Borrador</string>
+    <string name="title_nuevo">Nuevo</string>
+    <string name="title_imprimir">Imprimir</string>
+    <string name="title_activity_main4">Main4Activity</string>
+
+
+</resources>

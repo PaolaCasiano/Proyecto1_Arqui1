@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_lapiz"
+        android:icon="@mipmap/lapiz"
+        android:title="@string/title_lapiz" />
+
+
+    <item
+        android:id="@+id/navigation_borrador"
+        android:icon="@android:drawable/ic_delete"
+        android:title="@string/title_borrador" />
+
+    <item
+        android:id="@+id/navigation_nuevo"
+        android:icon="@mipmap/delete"
+        android:title="@string/title_nuevo" />
+    <item
+        android:id="@+id/navigation_imprimir"
+        android:icon="@mipmap/print"
+        android:title="@string/title_imprimir" />
+
+</menu>
