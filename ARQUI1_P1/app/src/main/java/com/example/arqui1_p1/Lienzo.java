@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -15,6 +16,8 @@ import android.graphics.Path;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.navigation.NavigationView;
+
+import java.util.UUID;
 
 
 public class Lienzo extends View{
@@ -27,9 +30,10 @@ public class Lienzo extends View{
     //Canvas
     private Canvas drawcanvas;
     //Canvas para guardar
-    private Bitmap canvasBitmap;
+    public Bitmap canvasBitmap;
     //Borrado
     private boolean borrado = false;
+    private  int activarpen = 1;
 
     public Lienzo(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -49,9 +53,8 @@ public class Lienzo extends View{
     }
     @Override
     protected  void onDraw(Canvas canvas){
-        canvas.drawBitmap(canvasBitmap,0,0,canvasPaint);
-        canvas.drawPath(drawPath,drawPaint);
-
+        canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
+        canvas.drawPath(drawPath, drawPaint);
     }
     @Override
     public boolean onTouchEvent(MotionEvent event){
@@ -63,11 +66,13 @@ public class Lienzo extends View{
                 drawPath.moveTo(touchX,touchY);
                 break;
             case MotionEvent.ACTION_MOVE:
-                drawPath.lineTo(touchX,touchY);
+                if(activarpen != 0)
+                    drawPath.lineTo(touchX,touchY);
                 break;
             case MotionEvent.ACTION_UP:
-                drawPath.lineTo(touchX,touchY);
-                drawcanvas.drawPath(drawPath,drawPaint);
+                if(activarpen != 0)
+                    drawPath.lineTo(touchX,touchY);
+                    drawcanvas.drawPath(drawPath,drawPaint);
                 drawPath.reset();
                 break;
             default:
@@ -84,7 +89,8 @@ public class Lienzo extends View{
         drawcanvas= new Canvas(canvasBitmap);
     }
     public void setBorrado(){
-
+        drawPaint.setColor(Color.WHITE);
+        //canvasBitmap.recycle();
     }
     public void setColor(int color){
         drawPaint.setColor(color);
@@ -93,5 +99,8 @@ public class Lienzo extends View{
     public void nuevoLienzo(){
         drawcanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
+    }
+    public void activarPen(int i){
+        this.activarpen = i;
     }
 }
