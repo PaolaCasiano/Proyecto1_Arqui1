@@ -2,12 +2,21 @@ package com.example.arqui1_p1;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.usage.ExternalStorageStats;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
         btn_draw = findViewById(R.id.btn_draw);
         btn_galery = findViewById(R.id.btn_galery);
 
+        //crearCarpetaImagenes();
+
     }
 
     public void dibujoNuevo(View view){
@@ -32,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         startActivity(i);
     }
     public void galeria(View view){
-        Toast.makeText(view.getContext(),"Abriendo galería",Toast.LENGTH_SHORT);
+        Intent i = new Intent(this,Main4Activity.class);
+        startActivity(i);
     }
+
 }

@@ -9,8 +9,8 @@
 
     <TextView
         android:id="@+id/txt_nombre"
-        android:layout_width="211dp"
-        android:layout_height="37dp"
+        android:layout_width="171dp"
+        android:layout_height="34dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
         android:text="@string/txt_nombre_dibujo"
@@ -19,8 +19,8 @@
 
     <com.example.arqui1_p1.Lienzo
         android:id="@+id/view"
-        android:layout_width="366dp"
-        android:layout_height="603dp"
+        android:layout_width="302dp"
+        android:layout_height="598dp"
 
         android:layout_marginStart="24dp"
         android:layout_marginTop="60dp"
@@ -32,7 +32,6 @@
         android:id="@+id/floatingActionMenu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="28dp"
         android:layout_marginTop="16dp"
         android:background="@android:color/transparent"
         app:layout_constraintStart_toEndOf="@+id/txt_nombre"
@@ -48,6 +47,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:src="@mipmap/colorred"
+            app:fab_colorNormal="#FFFFFF"
             app:fab_label="Rojo"
             app:fab_size="mini" />
 
@@ -57,6 +57,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:src="@mipmap/colorblue"
+            app:fab_colorNormal="#FFFFFF"
             app:fab_label="Azul"
             app:fab_size="mini" />
 
@@ -66,6 +67,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:src="@mipmap/color"
+            app:fab_colorNormal="#FFFFFF"
             app:fab_label="Negro"
             app:fab_size="mini" />
 
