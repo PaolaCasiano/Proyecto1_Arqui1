@@ -86,9 +86,9 @@ class ListaImagenes(object):
 
 class NodoI(object):
 
-	def __init__(self, name,json):
+	def __init__(self, name,base64):
 		self.name = name
-		self.json = json
+		self.base64 = base64
 		self.siguiente = None
 		self.anterior = None
 
