@@ -4,6 +4,8 @@ from django.shortcuts import render, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from file.Lista import ListaImagenes, NodoI
+from file.image_to_gcode import ImageToGcode
+import base64
 import json
 
 # Clase estatica donde estara la imagen, o incluso una lista, pero tendria que saber cual ya ha mostrado
@@ -18,8 +20,9 @@ def index(request):
 def guardar_info(request):
 	if request.method == 'POST':
 		name = request.POST.get('nombre')
-		objJsn = request.POST.get('json')
-		nueva = Nodo(name, objJsn)
+		objB64 = request.POST.get('base64')
+		nueva = Nodo(name, objB64)
+		
 		imageList.insertarYa(nueva)
 
 		return JsonResponse({'success':'200'})
@@ -34,8 +37,12 @@ def request_impresion(request):
 			siguiente = imageList.first
 			tamano = imageList.tamano
 			imageList.moveToNext()
-			return JsonResponse(
-					{"size": tamano, "name": siguiente.name, "json": siguiente.json}
-				)
+
+			imgdata = base64.b64decode(siguiente.base64)
+			filename = siguiente.nombre + '.jpg'  # I assume you have a way of picking unique filenames
+			with open(filename, 'wb') as f:
+			    f.write(imgdata)
+
+			
 
 
