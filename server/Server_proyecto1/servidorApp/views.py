@@ -3,8 +3,8 @@ from django.http import HttpResponse, HttpResponseBadRequest,HttpResponseRedirec
 from django.shortcuts import render, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from file.Lista import ListaImagenes, NodoI
-from file.image_to_gcode import ImageToGcode
+from .file.Lista import ListaImagenes, NodoI
+from .file.image_to_gcode import ImageToGcode
 import base64
 import json
 
@@ -43,6 +43,12 @@ def request_impresion(request):
 			with open(filename, 'wb') as f:
 			    f.write(imgdata)
 
-			
-
+def prueba(request):
+	if request.method == 'POST':
+		name = request.POST.get('nom')
+		objB64 = request.POST.get('nom2')
+		print(name+'  '+ objB64)
+		return JsonResponse({'success':'200'})
+	else:
+		return JsonResponse({'success':'500', "message":"metodo metodo incorrecto"})
 

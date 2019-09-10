@@ -185,3 +185,160 @@ if __name__ == "__main__":
                                   feedrate=float(args.feedrate),
                                   offsets=offsets
                                   )
+
+
+
+    
+"""
+import numpy
+import matplotlib
+import matplotlib.pyplot
+import imageio
+import PIL.Image
+import sys
+"""
+
+def fileDialog(): # Metodo para pasar de imagen a gcode
+    try:
+        f = open("el path de la imagen", 'r')
+        f.close
+    except:
+       # print(fileName+" ")
+        f = open("el path de la imagen", 'w')
+        f.close
+    else:
+        """
+        answer = input(
+            fileName+" El archivo YA EXISTE, desea reescribirlo? (S/n): ")
+        if (answer == 's')or(answer == 'S')or(answer == ''):
+            f = open(fileName, 'w')
+            print(fileName+' Sera sobreescrito')
+            f.close
+        elif answer == 'n'or(answer == 'N'):
+            raise NameError("Path INCORRECTO")
+        else:
+            raise NameError("Opcion INCORRECTA")
+            """
+    return f
+    # CONVIERTIENDOLO A  8BIT GREYSCALE
+    try:
+        img = imageio.imread("el path de la imagen", as_gray=True, pilmode="RGB")
+
+    except:
+        raise NameError("Something is wrong with image. Probably path")
+
+
+    # ARCHIVO DONDE SE VA A GUARDAR EL GCODE
+    f = fileDialog("el path del archivo.nc del gcode")
+
+    #########SPLIT DE MEDIDAS##########
+    medidassplit = medidas.split(",");
+    ###################################
+    try:
+        x_offset_mm = float(0)
+        y_offset_mm = float(0)
+        output_image_horizontal_size_mm = float(10)
+        pixel_size_mm = float(0.2)
+        feedrate = int(100)
+        max_laser_power = int(255)
+        number_of_colours = int(5)
+
+    except:
+        raise NameError("NO INGRESO NUMEROS COMO PARAMETROS")
+
+    # REDIMENSIONANDO LA IMAGEN
+    y_size_input = len(img)
+    x_size_input = len(img[0])
+
+    # CALCULANDO LA ESCALA
+    x_size_output = output_image_horizontal_size_mm/pixel_size_mm
+    scale = x_size_output/x_size_input
+
+    # REDIMENSIONANDO LA IMAGEN
+    img = PIL.Image.fromarray(img,)
+    img = img.resize((int(scale*x_size_input), int(scale*y_size_input)))
+    img = numpy.asarray(img)
+
+    # CALCULANDO TAMAÑO DE IMAGEN
+    y_size_output = len(img)
+    x_size_output = len(img[0])
+
+    # negative for laser etching 
+    img=numpy.subtract(255,img)
+
+    # set max value of image colour to number of colours 
+    number_of_colours -= 1
+    img = numpy.rint(numpy.multiply(img, number_of_colours/255))
+
+    #GUARDAR PREVIEW
+    img_out=numpy.empty((x_size_output,y_size_output))
+    img_out=numpy.rint(numpy.multiply(img, 255/number_of_colours))
+    img_out = img_out.astype(numpy.uint8)
+    imageio.imwrite('out_img.png',img_out) #preview de la imagen pero en escala de grises
+
+    #CONVERTIR A feedrates
+    img = numpy.rint(numpy.multiply(img, max_laser_power/number_of_colours))
+
+    # display preview before processing - requires closing plot window before proceeding 
+    # img2=numpy.subtract(number_of_colours,img)
+    # matplotlib.pyplot.imshow(img2, cmap='gray')
+    # matplotlib.pyplot.show()
+
+    # VOLTEAR PARA QUE SEA MAS SIMPLE?
+    img=numpy.flip(img,0)
+
+    ########################### G CODE #################################
+    f.write(" \n") 
+
+    for y in range(y_size_output):
+        prev_power=int(0)
+      
+        if 1-y%2:
+            
+            for x in range(x_size_output):
+                if (x == 0  and img[y][x] != 0): #first point, diffrent from 0
+                    f.write("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
+                    f.write("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                    prev_power = int(img[y][x])
+                elif x==(x_size_output-1):#eol
+                    if (prev_power==0):
+                        f.write("M5 S0\n")
+                    else:
+                        f.write("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M5 S0\n")
+                    prev_power=0
+                elif (prev_power != img[y][x]):#different power
+                    if (prev_power==0): #transition from 0 to higher power
+                        f.write("G0 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M3 S"+str(int(img[y][x]))+"\n") 
+                        prev_power = int(img[y][x])
+                    if(prev_power != 0):# transition from some power to another
+                        f.write("G1 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M3 S"+str(int(img[y][x]))+"\n")  
+                        prev_power = int(img[y][x])
+        else:
+            # prev_power=int(0)
+            for x in reversed(range(x_size_output)):
+                if (x == x_size_output-1  and img[y][x] != 0): #first point, diffrent from 0
+                    f.write("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
+                    f.write("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                    prev_power = int(img[y][x])
+                elif x==0:#eol
+                    if (prev_power==0):
+                        f.write("M5 S0\n")
+                    else:
+                        f.write("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M5 S0\n")
+                    prev_power=0
+                elif (prev_power != img[y][x]):#different power
+                    if (prev_power==0): #transition from 0 to higher power
+                        f.write("G0 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                        prev_power = int(img[y][x])
+                    if(prev_power != 0):# transition from some power to another
+                        f.write("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
+                        f.write("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                        prev_power = int(img[y][x])
+    f.close()
+    print("GCODE GENERADO CON EXITO xd")
+        
