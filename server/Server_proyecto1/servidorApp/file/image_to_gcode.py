@@ -7,10 +7,19 @@ import termcolor
 import ast
 import copy
 
+import numpy
+#import matplotlib
+#import matplotlib.pyplot
+import imageio
+import PIL.Image
+
 
 
 class ImageToGcode():
-    def __init__(self,
+    def __init__(self):
+        print('Generated!')
+
+    def imprimir1(self,
                  img,
                  spread, #extension decimal
                  nozzles, #entero
@@ -35,6 +44,7 @@ class ImageToGcode():
         self.offsets = offsets 
         #self.debug_to_terminal()
         self.make_gcode()
+
 
     def make_gcode(self):
         #self.output = "M106"  # Start Fan
@@ -198,13 +208,13 @@ import PIL.Image
 import sys
 """
 
-def fileDialog(): # Metodo para pasar de imagen a gcode
+def printImage(self, name, path): # Metodo para pasar de imagen a gcode
     try:
-        f = open("el path de la imagen", 'r')
+        f = open(path, 'r')
         f.close
     except:
        # print(fileName+" ")
-        f = open("el path de la imagen", 'w')
+        f = open(path, 'w')
         f.close
     else:
         """
@@ -222,18 +232,15 @@ def fileDialog(): # Metodo para pasar de imagen a gcode
     return f
     # CONVIERTIENDOLO A  8BIT GREYSCALE
     try:
-        img = imageio.imread("el path de la imagen", as_gray=True, pilmode="RGB")
+        img = imageio.imread(path, as_gray=True, pilmode="RGB")
 
     except:
         raise NameError("Something is wrong with image. Probably path")
 
 
     # ARCHIVO DONDE SE VA A GUARDAR EL GCODE
-    f = fileDialog("el path del archivo.nc del gcode")
+    f = fileDialog("name.nc")
 
-    #########SPLIT DE MEDIDAS##########
-    medidassplit = medidas.split(",");
-    ###################################
     try:
         x_offset_mm = float(0)
         y_offset_mm = float(0)

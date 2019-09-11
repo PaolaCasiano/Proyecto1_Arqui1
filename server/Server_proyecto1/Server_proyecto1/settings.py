@@ -28,8 +28,11 @@ DEBUG = True
 ALLOWED_HOSTS = [
 	'192.168.1.10'
 	, 'localhost'
+    , '192.168.43.240'
 ]
 
+
+CSRF_COOKIE_SECURE = False
 
 # Application definition
 
