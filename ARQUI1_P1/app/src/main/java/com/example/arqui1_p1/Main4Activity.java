@@ -5,19 +5,56 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-public class Main4Activity extends AppCompatActivity {
+
+import java.io.File;
+
+
+
+public class Main4Activity extends AppCompatActivity implements View.OnClickListener {
     final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE=45;//
     final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE=46;
+    Button btncargar,btneliminar;
+    TextView tv;
+    ImageView imagen;
+    String pathactual;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main4);
+
+        tv = findViewById(R.id.textView2);
+        imagen = findViewById(R.id.imageView);
+        btncargar=findViewById(R.id.button5);
+        btncargar.setOnClickListener(this);
+        btneliminar= findViewById(R.id.button6);
+        btneliminar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try{
+                    File file = new File(pathactual);
+                    if(file.exists()){
+                        file.delete();
+                    }
+                }catch (Exception e){
+                   e.printStackTrace();
+                }
+
+            }
+        });
 
         solicitarPermisos();
     }
@@ -101,6 +138,23 @@ public class Main4Activity extends AppCompatActivity {
                 return;
             // other 'case' lines to check for other
             // permissions this app might request.
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/");
+        startActivityForResult(intent,0);
+
+    }
+    @Override
+    protected  void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode==RESULT_OK){
+            Uri path =data.getData();
+            Log.e(pathactual,"Odiomibida");
+            imagen.setImageURI(path);
         }
     }
 }

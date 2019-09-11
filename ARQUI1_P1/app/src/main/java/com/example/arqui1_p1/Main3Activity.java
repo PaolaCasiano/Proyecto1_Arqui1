@@ -7,9 +7,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.clans.fab.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -22,18 +31,28 @@ import androidx.core.content.ContextCompat;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public class Main3Activity extends AppCompatActivity {
@@ -48,11 +67,14 @@ public class Main3Activity extends AppCompatActivity {
     FloatingActionButton fbNegro;
     FloatingActionButton fbAzul;
     FloatingActionButton fbRojo;
-
+    RequestQueue rq;
+    String url = "http://192.168.43.240:8000/servidorApp/guardar_info";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main3);
+        rq = Volley.newRequestQueue(this);
+
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
         navView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -140,7 +162,7 @@ public class Main3Activity extends AppCompatActivity {
                 solicitarPermisos();
 
                 String file_path = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                        "/imagenesPaint";
+                        "/imagenespaint";
                 File dir = new File(file_path);
                 if(!dir.exists())
                     dir.mkdirs();
@@ -167,7 +189,42 @@ public class Main3Activity extends AppCompatActivity {
                 } catch (IOException e) {
                     Log.e("Buscar","Exception por flush y close");
                 }
+                String base64 ="";
+                try{
+                    /*byte[] buffer = new byte[(int) file.length()+100];
+                    @SuppressWarnings("resource")
+                    int length = new FileInputStream(file).read(buffer);
+                    base64 = Base64.encodeToString(buffer,0,length,Base64.DEFAULT);*/
+                    Bitmap bm = BitmapFactory.decodeFile(file.getAbsolutePath());
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.PNG,100,baos);
+                    byte[] b = baos.toByteArray();
+                    base64=Base64.encodeToString(b,Base64.DEFAULT);
 
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+                final String finalBase6 = base64;
+                StringRequest str = new StringRequest(Request.Method.POST, url,
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(),"Error:"+error.toString(),Toast.LENGTH_LONG).show();
+                    }
+                }) {
+                    @Override
+                    protected Map<String,String> getParams(){
+                        Map<String,String> params = new HashMap<>();
+                        params.put("B64", finalBase6);
+                        return params;
+                    }
+                };
+                rq.add(str);
 
 //                lienzo.setDrawingCacheEnabled(true);
 //                String imgSv = MediaStore.Images.Media.insertImage(
