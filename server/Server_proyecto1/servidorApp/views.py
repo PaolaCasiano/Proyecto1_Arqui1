@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseBadRequest,HttpResponseRedirec
 from django.shortcuts import render, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from .file.Lista import ListaImagenes, NodoI
+from .file.Lista import ListaImagenes, Nodo
 from .file.image_to_gcode import ImageToGcode
 from django.views.decorators.csrf import csrf_exempt
 import base64
@@ -33,10 +33,17 @@ def guardar_info(request):
 	# return HttpResponse("Recibi el arreglo")
 	if request.method == 'POST':
 		name = request.POST.get('nombre')
-		objB64 = request.POST.get('base64')
+		objB64 = request.POST.get('B64')
 		nueva = Nodo(name, objB64)
+		print(objB64	)
+		filename = "nombre_prueba" 
+		imgdata = base64.b64decode(objB64)
+		with open(filename+'.png', 'wb') as f:
+		    f.write(imgdata)
+		if f!= None:
+			printer.printImage(filename, filename + '.png') 
 		
-		imageList.insertarYa(nueva)
+		#imageList.insertarYa(nueva)
 
 		return JsonResponse({'success':'200'})
 	else:

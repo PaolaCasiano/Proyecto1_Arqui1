@@ -59,7 +59,7 @@ class ListaImagenes(object):
 			return None
 
 
-class NodoI(object):
+class Nodo(object):
 
 	def __init__(self, name,base64):
 		self.name = name
