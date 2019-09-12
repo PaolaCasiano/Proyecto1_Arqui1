@@ -22,14 +22,15 @@ def pruebaHola(request):
 	return HttpResponse("Hola")
 # Create your views here.
 
+@csrf_exempt
 def guardar_info(request):
 
 
-	print("THIS IS THE FKNG POST")
-	body_unicode = request.body.decode('utf-8')
-	print(body_unicode)
-	print("THIS IS THE END OF FKNG POST")
-	return JsonResponse({'success':'200'})
+	# print("THIS IS THE FKNG POST")
+	# objB64 = request.POST.get('B64')
+	# print(objB64)
+	# print("THIS IS THE END OF FKNG POST")
+	# return HttpResponse("Recibi el arreglo")
 	if request.method == 'POST':
 		name = request.POST.get('nombre')
 		objB64 = request.POST.get('base64')
@@ -40,6 +41,7 @@ def guardar_info(request):
 		return JsonResponse({'success':'200'})
 	else:
 		return JsonResponse({'success':'500', "message":"metodo metodo incorrecto"})
+
 
 @csrf_exempt
 def request_impresion(request):
