@@ -2,6 +2,7 @@ package com.example.arqui1_p1;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
@@ -48,11 +49,14 @@ public class Lienzo extends View{
         drawPaint.setStyle(Paint.Style.STROKE);
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
+        drawPaint.setStrokeWidth(10);
         canvasPaint = new Paint(Paint.DITHER_FLAG);
+
 
     }
     @Override
     protected  void onDraw(Canvas canvas){
+        canvas.drawColor(Color.WHITE);
         canvas.drawBitmap(canvasBitmap, 0, 0, canvasPaint);
         canvas.drawPath(drawPath, drawPaint);
     }
@@ -103,4 +107,6 @@ public class Lienzo extends View{
     public void activarPen(int i){
         this.activarpen = i;
     }
+
+
 }
