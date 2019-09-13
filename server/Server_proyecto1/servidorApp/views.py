@@ -14,6 +14,7 @@ import json
 
 imagesList = ListaImagenes()
 printer = ImageToGcode()
+conteo = 0;
 
 def index(request):
 	return HttpResponse('<h1>Hemlo world</h1>')
@@ -24,13 +25,6 @@ def pruebaHola(request):
 
 @csrf_exempt
 def guardar_info(request):
-
-
-	# print("THIS IS THE FKNG POST")
-	# objB64 = request.POST.get('B64')
-	# print(objB64)
-	# print("THIS IS THE END OF FKNG POST")
-	# return HttpResponse("Recibi el arreglo")
 	if request.method == 'POST':
 		name = request.POST.get('nombre')
 		objB64 = request.POST.get('B64')
@@ -40,10 +34,9 @@ def guardar_info(request):
 		imgdata = base64.b64decode(objB64)
 		with open(filename+'.png', 'wb') as f:
 		    f.write(imgdata)
-		if f!= None:
-			printer.printImage(filename, filename + '.png') 
+		    printer.printImage('android_', 'dibujo' + '.png') 
 		
-		#imageList.insertarYa(nueva)
+		imagesList.insertarYa(nueva)
 
 		return JsonResponse({'success':'200'})
 	else:
@@ -87,4 +80,6 @@ def getStringLiquid(request):
 	body_unicode = request.body.decode('utf-8')
 	print(body_unicode)
 	print("THIS IS THE END OF FKNG POST")
+	printer.coordenadasapng('pantalla_prueba',body_unicode)
+	printer.printImage('pantalla_', 'pantalla_prueba.png')
 	return HttpResponse("Recibi el arreglo")

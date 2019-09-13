@@ -6,7 +6,7 @@
 
 #define LED_BUILTIN 2
 
-SoftwareSerial s(3,1);
+SoftwareSerial myserial(3,1);
 const char* ssid = "Holi:3";
 const char* password = "amfj46571";
 
@@ -15,9 +15,8 @@ std::string data_;
 std::string data_pantalla;
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  //Serial.begin(115200);//Serial connection
+  myserial.begin(115200);//Serial connection
   Serial.begin(9600);
-  //s.begin(9600); //serial para recibir datos
   WiFi.begin(ssid,password);   //WiFi connection
   while (WiFi.status() != WL_CONNECTED) {  //Wait for the WiFI connection completion
     //Serial.print(WiFi.status() +" - ");
@@ -53,7 +52,6 @@ void loop() {
       //Serial.println(data_pantalla.c_str());
     }else{
       //Serial.println(".");
-      return;
       GET();  
     }
     
@@ -128,6 +126,7 @@ void GET(){
       String payload = http.getString();   //Get the request response payload
       Serial.println("payload get");
       Serial.println(payload);                     //Print the response payload
+      myserial.print(payload);
 
     }else{
       Serial.println("httpCode recieved "+ httpCode);

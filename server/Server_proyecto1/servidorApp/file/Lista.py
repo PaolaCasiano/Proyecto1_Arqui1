@@ -14,7 +14,7 @@ class ListaImagenes(object):
 		if self.primero == None:
 			self.primero = nuevo
 			self.ultimo = self.primero
-			self.cont +=1
+			self.con +=1
 		else:
 			self.ultimo.siguiente = nuevo
 			self.ultimo = self.ultimo.siguiente
