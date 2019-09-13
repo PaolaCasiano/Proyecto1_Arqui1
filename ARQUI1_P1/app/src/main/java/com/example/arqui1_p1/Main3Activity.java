@@ -62,6 +62,7 @@ public class Main3Activity extends AppCompatActivity {
     String dato;
     TextView txt_nombre;
     Lienzo lienzo;
+    String b64;
 
     FloatingActionMenu fbMenu;
     FloatingActionButton fbNegro;
@@ -166,7 +167,7 @@ public class Main3Activity extends AppCompatActivity {
                 File dir = new File(file_path);
                 if(!dir.exists())
                     dir.mkdirs();
-                File file = new File(dir,  dato + ".png");
+                File file = new File(dir,  dato + ".jpeg");
 
                 if(file.exists()){
                     boolean result = file.delete();
@@ -180,7 +181,7 @@ public class Main3Activity extends AppCompatActivity {
                 //lienzo.setDrawingCacheEnabled(true);
                 try {
                     fOut = new FileOutputStream(file);
-                    lienzo.canvasBitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+                    lienzo.canvasBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
                     fOut.flush();
                     fOut.close();
                 } catch (FileNotFoundException e) {
@@ -199,7 +200,7 @@ public class Main3Activity extends AppCompatActivity {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     bm.compress(Bitmap.CompressFormat.PNG,100,baos);
                     byte[] b = baos.toByteArray();
-                    base64=Base64.encodeToString(b,Base64.DEFAULT);
+                    b64=Base64.encodeToString(b,Base64.DEFAULT);
 
                 }catch(Exception e){
                     e.printStackTrace();
@@ -220,7 +221,8 @@ public class Main3Activity extends AppCompatActivity {
                     @Override
                     protected Map<String,String> getParams(){
                         Map<String,String> params = new HashMap<>();
-                        params.put("B64", finalBase6);
+                        params.put("B64", b64);
+                        params.put("nombre",dato);
                         return params;
                     }
                 };
