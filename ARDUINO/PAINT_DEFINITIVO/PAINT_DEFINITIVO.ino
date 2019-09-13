@@ -107,7 +107,7 @@ String cadena;
 void setup(void) {
   cadena = "";
 
-  Serial.begin(115200);//Serial connection
+  Serial.begin(9600);//Serial connection
   myserial.begin(9600);
 
   tft.reset();
@@ -149,75 +149,74 @@ void loop()
 {
 
   if (Serial.available()) {
-    Serial.print(Serial.read());
-    return;
+    //Serial.print(Serial.read());
+    //Serial.println("algo");
   } else{
-    //Serial.println("no sirvio");
-  }
-
-  digitalWrite(13, HIGH);
-  TSPoint p = ts.getPoint();
-  digitalWrite(13, LOW);
-
-  // if sharing pins, you'll need to fix the directions of the touchscreen pins
-  //pinMode(XP, OUTPUT);
-  pinMode(XM, OUTPUT);
-  pinMode(YP, OUTPUT);
-  //pinMode(YM, OUTPUT);
-
-  // we have some minimum pressure we consider 'valid'
-  // pressure of 0 means no pressing!
-
-  if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
-    // scale from 0->1023 to tft.width
-
-    // *** SPFD5408 change -- Begin
-    // Bug in in original code
-    //p.x = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
-    p.x = map(p.x, TS_MAXX, TS_MINX, 0, tft.width());
-    // *** SPFD5408 change -- End
-    p.y = map(p.y - 50, TS_MINY, TS_MAXY, 0, tft.height());
-
-    /*
-      Serial.print("("); Serial.print(p.x);
-      Serial.print(", "); Serial.print(p.y);
-      Serial.println(")");
-    */
-    if (p.y < BOXSIZE) {
-      oldcolor = currentcolor;
-
-      if (p.x < BOXSIZE) {
-        currentcolor = BLACK;
-        tft.drawRect(0, 0, BOXSIZE, BOXSIZE, WHITE);
-      } else if (p.x < BOXSIZE * 2) {
-        currentcolor = BLUE;
-        tft.drawRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, WHITE);
-      } else if (p.x < BOXSIZE * 3) {
-        currentcolor = RED;
-        tft.drawRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, WHITE);
+    digitalWrite(13, HIGH);
+    TSPoint p = ts.getPoint();
+    digitalWrite(13, LOW);
+  
+    // if sharing pins, you'll need to fix the directions of the touchscreen pins
+    //pinMode(XP, OUTPUT);
+    pinMode(XM, OUTPUT);
+    pinMode(YP, OUTPUT);
+    //pinMode(YM, OUTPUT);
+  
+    // we have some minimum pressure we consider 'valid'
+    // pressure of 0 means no pressing!
+  
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+      // scale from 0->1023 to tft.width
+  
+      // *** SPFD5408 change -- Begin
+      // Bug in in original code
+      //p.x = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
+      p.x = map(p.x, TS_MAXX, TS_MINX, 0, tft.width());
+      // *** SPFD5408 change -- End
+      p.y = map(p.y - 50, TS_MINY, TS_MAXY, 0, tft.height());
+  
+      /*
+        Serial.print("("); Serial.print(p.x);
+        Serial.print(", "); Serial.print(p.y);
+        Serial.println(")");
+      */
+      if (p.y < BOXSIZE) {
+        oldcolor = currentcolor;
+  
+        if (p.x < BOXSIZE) {
+          currentcolor = BLACK;
+          tft.drawRect(0, 0, BOXSIZE, BOXSIZE, WHITE);
+        } else if (p.x < BOXSIZE * 2) {
+          currentcolor = BLUE;
+          tft.drawRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, WHITE);
+        } else if (p.x < BOXSIZE * 3) {
+          currentcolor = RED;
+          tft.drawRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, WHITE);
+        }
+  
+        if (oldcolor != currentcolor) {
+          if (oldcolor == BLACK) tft.fillRect(0, 0, BOXSIZE, BOXSIZE, BLACK);
+          if (oldcolor == BLUE) tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, BLUE);
+          if (oldcolor == RED) tft.fillRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, RED);
+        }
+        //PRESIONAR EL BOTON DE IMPRIMIR
+        if (p.x > BOXSIZE * 3 && p.x < tft.width()) {
+          //Hacer la peticion al web service
+          //Serial.println(F("SE PRESIONO IMPRIMIR"));
+          //Serial.println(cadena);
+          //if(cadena!=""){
+          PostReq(cadena);
+          //Serial.println("posteo cadena");
+          //cadena="";
+          //}
+  
+        }
+  
       }
-
-      if (oldcolor != currentcolor) {
-        if (oldcolor == BLACK) tft.fillRect(0, 0, BOXSIZE, BOXSIZE, BLACK);
-        if (oldcolor == BLUE) tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, BLUE);
-        if (oldcolor == RED) tft.fillRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, RED);
+      if (((p.y - PENRADIUS) > BOXSIZE) && ((p.y + PENRADIUS) < tft.height())) {
+        tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
+        cadena = cadena  + p.x + "," + p.y + ";";
       }
-      //PRESIONAR EL BOTON DE IMPRIMIR
-      if (p.x > BOXSIZE * 3 && p.x < tft.width()) {
-        //Hacer la peticion al web service
-        //Serial.println(F("SE PRESIONO IMPRIMIR"));
-        //Serial.println(cadena);
-        //if(cadena!=""){
-        PostReq(cadena);
-        //cadena="";
-        //}
-
-      }
-
-    }
-    if (((p.y - PENRADIUS) > BOXSIZE) && ((p.y + PENRADIUS) < tft.height())) {
-      tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
-      cadena = cadena  + p.x + "," + p.y + ";";
     }
   }
 }
@@ -227,31 +226,13 @@ void PostReq(String coordenadas) {
   coordenadas = "&" + coordenadas + "&";
   int str_len = coordenadas.length() + 1;
   char char_array[str_len];
+  Serial.println(coordenadas);
 
   // Copy it over
 
   coordenadas.toCharArray(char_array, str_len);
+  Serial.println(coordenadas);
   //myserial.write(char_array);
   myserial.print(coordenadas);
   //coordenadas = "";
-  /*if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
-
-    HTTPClient http;    //Declare object of class HTTPClient
-
-    http.begin("http://192.168.1.88:8085/hello");      //Specify request destination
-    http.addHeader("Content-Type", "text/plain");  //Specify content-type header
-
-    int httpCode = http.POST(cadena);   //Send the request
-    String payload = http.getString();                  //Get the response payload
-
-    Serial.println(httpCode);   //Print HTTP return code
-    Serial.println(payload);    //Print request response payload
-
-    http.end();  //Close connection
-
-    }else{
-
-    Serial.println("Error in WiFi connection");
-
-    }*/
 }

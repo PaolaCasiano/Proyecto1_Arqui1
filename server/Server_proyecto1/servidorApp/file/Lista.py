@@ -6,6 +6,7 @@ class ListaImagenes(object):
 		self.primero= None
 		self.con = 0
 		self.ultimo= None
+		self.puntero = 0
 
 	def estaVacio(self):
 		return self.primero== None
@@ -21,7 +22,10 @@ class ListaImagenes(object):
 			self.con += 1
 
 	def tamano(self):
-		return sef.con
+		return self.con
+
+	def getPUntero(self):
+		return self.puntero
 
 	def first(self):
 		return self.primero
@@ -34,6 +38,35 @@ class ListaImagenes(object):
 		else:
 			self.primero = self.primero.siguiente
 			self.con =- 1
+
+	def getPosicion(self):
+		#a = str(self.primero.name) + ";"
+		if self.primero == None:
+			return None
+
+		if self.puntero == 0:
+			return self.primero
+
+		aux = self.primero
+		cont_aux = 0
+		while aux.siguiente!= None:
+			aux = aux.siguiente
+			cont_aux = cont_aux +1
+			if cont_aux == self.puntero:
+				return aux
+		return None
+
+	def aumentarPuntero(self):
+		if(self.puntero < self.con):
+			self.puntero = self.puntero +1
+
+	def punteroTopado(self):
+		if(self.con == 0):
+			return True
+		if self.puntero >= self.con:
+			return True
+
+		return False
 
 	def buscar(self, palabra):
 		print ('entro a buscar')
@@ -57,6 +90,26 @@ class ListaImagenes(object):
 					self.esta = False
 					print ('no esta')
 			return None
+
+	def imprimir(self):
+ 		print ('\nse entro a imprimir')
+
+ 		if self.primero==None:
+ 			print ('la lista esta vacia')
+
+ 			#return "lista Vacia"
+ 		else:
+ 			print ('no esta vacio')
+ 			a = str(self.primero.name) + ";"
+ 			aux = self.primero
+
+ 			while aux.siguiente!= None:
+ 				a=a+ str(aux.name)+";"
+ 				a=a+ str(aux.name)+" -> "+ str(aux.siguiente.name)+ ";"
+ 				print (aux.name)
+ 				aux = aux.siguiente
+ 			print (aux.name)
+ 			return a;
 
 
 class Nodo(object):
