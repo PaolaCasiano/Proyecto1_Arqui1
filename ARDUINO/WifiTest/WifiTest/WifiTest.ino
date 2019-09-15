@@ -13,6 +13,7 @@ const char* password = "amfj46571";
 int estado = 1;
 std::string data_;
 std::string data_pantalla;
+String datos;
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   myserial.begin(9600);//Serial connection
@@ -31,48 +32,29 @@ void loop() {
   if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
 
     if(Serial.available() >0){
-      data_pantalla = Serial.read();
-      if(data_pantalla == "&"){
-        if(estado ==1){
-          estado = 2;
-        }else if(estado == 2){
-          estado = 0;
-          Serial.println("Ya se debe postear");
-          Serial.println(data_.c_str());
-          POSTEAR(data_);
-          data_ = "";
-        }
-      }else{
-        data_ += data_pantalla;
-        //Serial.println(data_pantalla.c_str());
-      }
+      datos = Serial.readString();
+      POSTEAR(datos);
       delay(1);
-      //Serial.println("datos");
-      //Serial.print("Se recibio data ");
-      //Serial.println(data_pantalla.c_str());
       
-    }else if (estado ==0){
-      //Serial.println(".");
+    }else{
       GET();  
+      delay(100);
+      
     }
     
    
   }
 }
 
-void POSTEAR(std::string cadena){
+void POSTEAR(String cadena){
     HTTPClient http;    //Declare object of class HTTPClient
  
     http.begin("http://192.168.43.240:8000/servidorApp/getStringLiquid");      //Specify request destination
     http.addHeader("Content-Type", "text/plain");  //Specify content-type header
-    Serial.println("se ha posteado");
-    char char_array[cadena.size()+1];
+    char char_array[cadena.length()+1];
     strcpy(char_array,cadena.c_str());
     int httpCode = http.POST(char_array);   //Send the request
     String payload = http.getString();                  //Get the response payload
- 
-    //Serial.println(httpCode);   //Print HTTP return code
-    //Serial.println(payload);    //Print request response payload
  
     http.end();  //Close connection
     delay(1000);
@@ -93,12 +75,10 @@ void GET(){
     if (httpCode > 0) { //Check the returning code
 
       String payload = http.getString();   //Get the request response payload
-      if(payload !="E" && payload !="F" && payload != "H"){
-        Serial.println("payload get");  
-        Serial.println(payload);                     //Print the response payload
-        myserial.print(payload);
+      if(payload !="E" && payload !="F" && payload != "H"&&  payload != ""){
+        Serial.println( http.getString()+"&");                     //Print the response payload
+        //delay(1000);
       }
-      
       //Serial.println("se imprimio payload");  
 
     }else{
@@ -109,5 +89,4 @@ void GET(){
 
   }
 
-  //delay(30000);    //Send a request every 30 seconds
 }

@@ -29,11 +29,10 @@ def guardar_info(request):
 		name = request.POST.get('nombre')
 		objB64 = request.POST.get('B64')
 		nueva = Nodo(name+'.jpg', objB64)
-		print(objB64)
+		print("Entro a guardar_info")
 		imgdata = base64.b64decode(objB64)
 		with open(name+'.jpg', 'wb') as f:
 		    f.write(imgdata)
-		    #printer.printImage(name,name+'.jpg') 
 		    printer.printImage(name,name+'.jpg') 
 		imagesList.insertarYa(nueva)
 
@@ -65,7 +64,7 @@ def request_impresion(request):
 			filename = siguiente.name 
 			gcode = printer.printImageStr("", filename) 
 			print("acabo de mandar algo")
-			print(gcode)
+			#print(gcode)
 			imagesList.aumentarPuntero()
 			return HttpResponse(gcode)
 

@@ -96,16 +96,18 @@ class ListaImagenes(object):
 
  		if self.primero==None:
  			print ('la lista esta vacia')
+ 			return "Lista Vacia"
 
  			#return "lista Vacia"
  		else:
  			print ('no esta vacio')
- 			a = str(self.primero.name) + ";"
+ 			#a = str(self.primero.name) + ";"
  			aux = self.primero
+ 			a = aux.name;
 
  			while aux.siguiente!= None:
- 				a=a+ str(aux.name)+";"
- 				a=a+ str(aux.name)+" -> "+ str(aux.siguiente.name)+ ";"
+ 				#a=a+ str(aux.name)+";"
+ 				a=a+ " -> "+ str(aux.siguiente.name)+ ";"
  				print (aux.name)
  				aux = aux.siguiente
  			print (aux.name)
