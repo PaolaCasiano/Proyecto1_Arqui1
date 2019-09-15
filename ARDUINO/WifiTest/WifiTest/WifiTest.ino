@@ -5,8 +5,8 @@
 #include<Arduino.h>
 
 #define LED_BUILTIN 2
-
-SoftwareSerial myserial(3,1);
+//#SoftwareSerial myserial(3,1);
+SoftwareSerial myserial(0,1);
 const char* ssid = "Holi:3";
 const char* password = "amfj46571";
 
