@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -179,9 +180,13 @@ public class Main3Activity extends AppCompatActivity {
 
                 FileOutputStream fOut = null;
                 //lienzo.setDrawingCacheEnabled(true);
+                Bitmap newbitmap = Bitmap.createBitmap(lienzo.canvasBitmap.getWidth(),lienzo.canvasBitmap.getHeight(),lienzo.canvasBitmap.getConfig());
+                Canvas canvas = new Canvas(newbitmap);
+                canvas.drawColor(Color.WHITE);
+                canvas.drawBitmap(lienzo.canvasBitmap,0,0,null);
                 try {
                     fOut = new FileOutputStream(file);
-                    lienzo.canvasBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
+                    newbitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
                     fOut.flush();
                     fOut.close();
                 } catch (FileNotFoundException e) {
@@ -198,7 +203,7 @@ public class Main3Activity extends AppCompatActivity {
                     base64 = Base64.encodeToString(buffer,0,length,Base64.DEFAULT);*/
                     Bitmap bm = BitmapFactory.decodeFile(file.getAbsolutePath());
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    bm.compress(Bitmap.CompressFormat.PNG,100,baos);
+                    bm.compress(Bitmap.CompressFormat.JPEG,100,baos);
                     byte[] b = baos.toByteArray();
                     b64=Base64.encodeToString(b,Base64.DEFAULT);
 
