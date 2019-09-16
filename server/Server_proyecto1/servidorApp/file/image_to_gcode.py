@@ -291,7 +291,7 @@ class ImageToGcode():
         try:
             x_offset_mm = float(0)
             y_offset_mm = float(0)
-            output_image_horizontal_size_mm = float(10)
+            output_image_horizontal_size_mm = float(30)
             pixel_size_mm = float(0.2)
             feedrate = int(100)
             max_laser_power = int(255)
@@ -342,7 +342,17 @@ class ImageToGcode():
         img=numpy.flip(img,0)
 
         ########################### G CODE #################################
-        strImage += (" \n") 
+        strImage = strImage + ("G21 (metric ftw) \n")
+        strImage = strImage + ("G90 (absolute mode) \n") 
+        strImage = strImage + ("G92 X0.00 Y0.00 Z0.00 (you are here) \n") 
+        strImage = strImage + ("M3 S30 (pen down) \n") 
+        strImage = strImage + ("G4 P150 (wait 150ms) \n") 
+        strImage = strImage + ("M300 S50 (pen up) \n") 
+        strImage = strImage + ("G4 P150 (wait 150ms) \n") 
+        strImage = strImage + ("M18 (disengage drives) \n") 
+        strImage = strImage + ("M01 (Was registration test successful?) \n") 
+        strImage = strImage + ("M17 (engage drives if YES, and continue) \n")
+        strImage = strImage + ("\n") 
 
         for y in range(y_size_output):
             prev_power=int(0)
@@ -351,49 +361,62 @@ class ImageToGcode():
                 
                 for x in range(x_size_output):
                     if (x == 0  and img[y][x] != 0): #first point, diffrent from 0
-                        strImage += ("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
-                        strImage += ("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                        strImage = strImage + ("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
+                        #strImage = strImage + ("M300 S3"+str(int(img[y][x]))+"\n")                                                                     
                         prev_power = int(img[y][x])
                     elif x==(x_size_output-1):#eol
                         if (prev_power==0):
-                            strImage += ("M5 S0\n")
+                            strImage = strImage + ("M300 S50.00\n")
+                            strImage = strImage + ("G4 P150 (wait 150ms)\n")
+                            strImage = strImage + ("\n")
                         else:
-                            strImage += ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M5 S0\n")
+                            strImage = strImage + ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n")      
+                            strImage = strImage + ("\n")
                         prev_power=0
                     elif (prev_power != img[y][x]):#different power
                         if (prev_power==0): #transition from 0 to higher power
-                            strImage += ("G0 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M3 S"+str(int(img[y][x]))+"\n") 
+                            strImage = strImage + ("G1 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n") #esta es una de las que inicia     
+                            strImage = strImage + ("M300 S30.00\n")
+                            strImage = strImage + ("G4 P150 (wait 150ms)\n") 
                             prev_power = int(img[y][x])
                         if(prev_power != 0):# transition from some power to another
-                            strImage += ("G1 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M3 S"+str(int(img[y][x]))+"\n")  
+                            strImage = strImage + ("G1 X"+str(round((x-1)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n")      
+                            #strImage = strImage + ("M300 S3"+str(int(img[y][x]))+"\n")  
                             prev_power = int(img[y][x])
             else:
                 # prev_power=int(0)
                 for x in reversed(range(x_size_output)):
                     if (x == x_size_output-1  and img[y][x] != 0): #first point, diffrent from 0
-                        strImage += ("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
-                        strImage += ("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                        strImage = strImage + ("G0 X"+str(round(x*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")                                                                                                              
+                        #strImage = strImage + ("M3 S3"+str(int(img[y][x]))+"\n")                                                                     
                         prev_power = int(img[y][x])
                     elif x==0:#eol
                         if (prev_power==0):
-                            strImage += ("M5 S0\n")
+                            strImage = strImage + ("M300 S50.00\n")
+                            strImage = strImage + ("\n")
                         else:
-                            strImage += ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M5 S0\n")
+                            strImage = strImage + ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n")      
+                            strImage = strImage + ("\n")
                         prev_power=0
                     elif (prev_power != img[y][x]):#different power
                         if (prev_power==0): #transition from 0 to higher power
-                            strImage += ("G0 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                            strImage = strImage + ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n") #esta es la otra con la que inicia      
+                            strImage = strImage + ("M300 S30.00\n")
+                            strImage = strImage + ("G4 P150 (wait 150ms)\n")                                                                     
                             prev_power = int(img[y][x])
                         if(prev_power != 0):# transition from some power to another
-                            strImage += ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+"\n")      
-                            strImage += ("M3 S"+str(int(img[y][x]))+"\n")                                                                     
+                            strImage = strImage + ("G1 X"+str(round((x)*pixel_size_mm+x_offset_mm,4))+" Y" + str(round(y*pixel_size_mm+y_offset_mm,4))+" F3500.00\n")      
+                            #strImage = strImage + ("M300 S3"+str(int(img[y][x]))+"\n")                                                                     
                             prev_power = int(img[y][x])
-        print("STR GCODE GENERADO CON EXITO xd")
+
+        strImage = strImage + ("M3 S50.00 (pen up) \n")
+        strImage = strImage + ("G4 P150 (wait 150ms) \n")
+        strImage = strImage + ("M300 S255 (turn off servo) \n")
+        strImage = strImage + ("G1 X0 Y0 F3500.00 \n")
+        strImage = strImage + ("G1 Z0.00 F150.00 (go up to finished level) \n")
+        strImage = strImage + ("G1 X0.00 Y0.00 F3500.00 (go home) \n")
+        strImage = strImage + ("M18 (drives off) \n")
+        print("GCODE GENERADO CON EXITO xd")
         return strImage
 
 
@@ -407,9 +430,10 @@ class ImageToGcode():
         for x in coordenadas1[:-1]:
             coordenadas2=x.split(",")
             if(len(coordenadas2)==2):
-                x = int(coordenadas2[0])
-                y = int(coordenadas2[1])
-                draw.ellipse([x,y,x+dotSize-1,y+dotSize-1], fill="black")
+                if(coordenadas2[0]!='' and coordenadas2[1]!=''):
+                    x = int(coordenadas2[0])
+                    y = int(coordenadas2[1])
+                    draw.ellipse([x,y,x+dotSize-1,y+dotSize-1], fill="black")
         img.save(nombre)
 
 if __name__ == "__main__":

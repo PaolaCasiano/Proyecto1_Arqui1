@@ -8,4 +8,6 @@ urlpatterns = [
     path('getStringLiquid', views.getStringLiquid, name='getStringLiquid'),
     path('request_impresion', views.request_impresion, name='request_impresion'),
     path('prueba', views.prueba, name='prueba'),
+    path('get_pila', views.get_pila, name='get_pila'),
+    path('buscar_imagen', views.buscar_imagen, name='buscar_imagen'),
 ]

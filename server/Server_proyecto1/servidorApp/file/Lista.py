@@ -68,26 +68,16 @@ class ListaImagenes(object):
 
 		return False
 
-	def buscar(self, palabra):
-		print ('entro a buscar')
-		cont = 0
+	def buscar_imagen(self,nombre):
 		if self.primero ==None:
-			self.esta = False
-			print ("Lista vacia")
 			return self.primero
 		else:
 			aux = self.primero
 			while aux!=None:
-				if aux.user == palabra:
-					print ('Se encontro')
-					self.esta = True
-					print ("Se encontro "+str(aux.user)+ " en el indice ",str(cont))
+				if aux.name == nombre:
 					return aux
-					break
 				else:
 					aux = aux.siguiente
-					cont = cont + 1
-					self.esta = False
 					print ('no esta')
 			return None
 
@@ -116,17 +106,28 @@ class ListaImagenes(object):
 
 class Nodo(object):
 
-	def __init__(self, name,base64):
+	def __init__(self, name,base64, gcode):
 		self.name = name
 		self.base64 = base64
 		self.siguiente = None
 		self.anterior = None
+		self.gcode = gcode
+		self.pos = 0
+		self.paso = 200
+		self.fin = 200
 
-	def getUser(self):
-		return str(self.user)
+	def getCharAtpos(self):
+		if len(self.gcode) < self.pos:
+			print(self.name)
+			print("mygcode"	)
+			print(self.gcode)
+			return self.gcode[self.pos]
 
-	def getPassword(self):
-		return str(self.password)
+	def aumentarPos(self):
+		if (self.fin + self.paso < len(self.gcode)):
+			self.pos = self.fin
+			self.fin = self.fin + self.paso
+		else:
+			self.pos = self.fin
+			self.fin = len(self.gcode) - 1
 
-	def setRoot(self,root):
-		self.root = root
