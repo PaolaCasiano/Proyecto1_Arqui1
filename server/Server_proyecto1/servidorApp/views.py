@@ -28,14 +28,12 @@ def guardar_info(request):
 	if request.method == 'POST':
 		name = request.POST.get('nombre')
 		objB64 = request.POST.get('B64')
-		nueva = Nodo(name, objB64)
-		print(objB64	)
-		filename = "nombre_prueba" 
+		nueva = Nodo(name+'.jpg', objB64)
+		print("Entro a guardar_info")
 		imgdata = base64.b64decode(objB64)
-		with open(filename+'.png', 'wb') as f:
+		with open(name+'.jpg', 'wb') as f:
 		    f.write(imgdata)
-		    printer.printImage('android_', 'dibujo' + '.png') 
-		
+		    printer.printImage(name,name+'.jpg') 
 		imagesList.insertarYa(nueva)
 
 		return JsonResponse({'success':'200'})
@@ -46,40 +44,46 @@ def guardar_info(request):
 @csrf_exempt
 def request_impresion(request):
 	if request.method == "GET":
-		if(imageList.estaVacio):
-			return JsonResponse({'size':'0'})
+		#imppresion = imagesList.imprimir()
+		#return HttpResponse(imppresion)
+
+
+		if(imagesList.estaVacio()):
+			return HttpResponse("E")
+
+		elif(imagesList.punteroTopado()):
+			print ("tamano:" + str(imagesList.tamano()))
+			print ("puntero:" + str(imagesList.getPUntero()))
+			return HttpResponse("F")
+
 		else:
-			siguiente = imageList.first
-			tamano = imageList.tamano
-			imageList.moveToNext()
+			siguiente = imagesList.getPosicion()
+			if siguiente == None:
+				return HttpResponse("H")
 
-			imgdata = base64.b64decode(siguiente.base64)
-			filename = siguiente.nombre 
-			f = filename
-			with open(filename, 'wb') as f:
-			    f.write(imgdata)
-			if f!= None:
-				printer.printImage(filename, filename + '.jpg') 
-
+			filename = siguiente.name 
+			gcode = printer.printImageStr("", filename) 
+			print("acabo de mandar algo")
+			#print(gcode)
+			imagesList.aumentarPuntero()
+			return HttpResponse(gcode)
 
 
 
+@csrf_exempt
 def prueba(request):
-	if request.method == 'POST':
-		name = request.POST.get('nom')
-		objB64 = request.POST.get('nom2')
-		print(name+'  '+ objB64)
-		return JsonResponse({'success':'200'})	
-	else:
-		return JsonResponse({'success':'500', "message":"metodo metodo incorrecto"})
+	impresion = imagesList.imprimir()
+	return HttpResponse(impresion)
 
 
 @csrf_exempt
 def getStringLiquid(request):
-	print("THIS IS THE FKNG POST")
+	print("THIS IS THE POST")
 	body_unicode = request.body.decode('utf-8')
 	print(body_unicode)
-	print("THIS IS THE END OF FKNG POST")
-	printer.coordenadasapng('pantalla_prueba',body_unicode)
-	printer.printImage('pantalla_', 'pantalla_prueba.png')
-	return HttpResponse("Recibi el arreglo")
+	print("THIS IS THE END OF POST")
+	name = "pantalla_" + str(imagesList.tamano())+'.png'
+	printer.coordenadasapng(name,body_unicode)
+	nueva = Nodo(name, "")
+	imagesList.insertarYa(nueva)
+	return HttpResponse("inserto")

@@ -1,68 +1,18 @@
-// Paint example specifically for the TFTLCD breakout board.
-// If using the Arduino shield, use the tftpaint_shield.pde sketch instead!
-// DOES NOT CURRENTLY WORK ON ARDUINO LEONARDO
 
-// Modified for SPFD5408 Library by Joao Lopes
-// Version 0.9.2 - Rotation for Mega
-
-// *** SPFD5408 change -- Begin
 #include <SPFD5408_Adafruit_GFX.h>    // Core graphics library
 #include <SPFD5408_Adafruit_TFTLCD.h> // Hardware-specific library
 #include <SPFD5408_TouchScreen.h>
-
 #include<Arduino.h>
 #include<SoftwareSerial.h>
-// *** SPFD5408 change -- End
-
 #if defined(__SAM3X8E__)
 #undef __FlashStringHelper::F(string_literal)
 #define F(string_literal) string_literal
 #endif
-
-// When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:
-// For the Arduino Uno, Duemilanove, Diecimila, etc.:
-//   D0 connects to digital pin 8  (Notice these are
-//   D1 connects to digital pin 9   NOT in order!)
-//   D2 connects to digital pin 2
-//   D3 connects to digital pin 3
-//   D4 connects to digital pin 4
-//   D5 connects to digital pin 5
-//   D6 connects to digital pin 6
-//   D7 connects to digital pin 7
-
-// For the Arduino Mega, use digital pins 22 through 29
-// (on the 2-row header at the end of the board).
-//   D0 connects to digital pin 22
-//   D1 connects to digital pin 23
-//   D2 connects to digital pin 24
-//   D3 connects to digital pin 25
-//   D4 connects to digital pin 26
-//   D5 connects to digital pin 27
-//   D6 connects to digital pin 28
-//   D7 connects to digital pin 29
-
-// For the Arduino Due, use digital pins 33 through 40
-// (on the 2-row header at the end of the board).
-//   D0 connects to digital pin 33
-//   D1 connects to digital pin 34
-//   D2 connects to digital pin 35
-//   D3 connects to digital pin 36
-//   D4 connects to digital pin 37
-//   D5 connects to digital pin 38
-//   D6 connects to digital pin 39
-//   D7 connects to digital pin 40
-
 #define YP A3  // must be an analog pin, use "An" notation!
 #define XM A2  // must be an analog pin, use "An" notation!
 #define YM 9   // can be a digital pin
 #define XP 8   // can be a digital pin
 
-
-// Original values
-//#define TS_MINX 150
-//#define TS_MINY 120
-//#define TS_MAXX 920
-//#define TS_MAXY 940
 
 // Calibrate values
 #define TS_MINX 125
@@ -70,9 +20,6 @@
 #define TS_MAXX 965
 #define TS_MAXY 905
 
-// For better pressure precision, we need to know the resistance
-// between X+ and X- Use any multimeter to read it
-// For the one we're using, its 300 ohms across the X plate
 TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 
 #define LCD_CS A3
@@ -96,19 +43,102 @@ Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 #define BOXSIZE 40
 #define PENRADIUS 2
 
-
-SoftwareSerial myserial(19, 18);
 using namespace std;
 int oldcolor, currentcolor;
 
 //VARIABLES PARA MANDAR LA IMAGEN
-String coordenadas;
+String post;
 String cadena;
+
+
+
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
+
+//Para motores
+
+#include <Servo.h>
+#include <Stepper.h>
+
+#define LINE_BUFFER_LENGTH 512
+
+int estadoImpresion; // Variable para controlar si esta en el estado de impresion<-------------------------------
+
+const int penZUp = 20;                 // Angle servomoteur, crayon arriba
+const int penZDown = 0;                            // Angle servomoteur, crayon abajo
+const int penServoPin = 38;              // Pin sur lequel est relié le servomoteur
+const int stepsPerRevolution = 20;              // Valeur par défaut
+const int vitesseDeplacement = 250;             // Vitesse de déplacement des axes X et Y
+
+Servo penServo;                     // Objet pour actionner le servomoteur
+
+// Initialisation de los motores
+Stepper myStepperY(stepsPerRevolution, 30, 32, 34, 36); // Axe Y
+Stepper myStepperX(stepsPerRevolution, 22, 24, 26, 28); // Axe X
+
+// Calibration, nombre de pas par millimètre
+float StepsPerMillimeterX = 6.0;
+float StepsPerMillimeterY = 6.0;
+
+/*
+    FIN DE LA CONFIGURATION
+*/
+
+/* Structures, global variables    */
+struct point {
+  float x;
+  float y;
+  float z;
+};
+
+// Current position of plothead
+struct point actuatorPos;
+
+//  Drawing settings, should be OK
+float StepInc = 1;
+int StepDelay = 0;
+int LineDelay = 50;
+int penDelay = 50;
+
+// Drawing robot limits, in mm
+// OK to start with. Could go up to 50 mm if calibrated well.
+float Xmin = 0;
+float Xmax = 40;
+float Ymin = 0;
+float Ymax = 40;
+float Zmin = 0;
+float Zmax = 1;
+
+float Xpos = Xmin;
+float Ypos = Ymin;
+float Zpos = Zmax;
+
+// Set to true to get debug output.
+boolean verbose = false;
+char c;
+int lineIndex;
+bool lineIsComment, lineSemiColon;
+char line[ LINE_BUFFER_LENGTH ];
+
+
+
 void setup(void) {
+
+  estadoImpresion = 0;//Inicializar al valor o caracter designado para este metodo
+  //  Setup
+
+  penServo.attach(penServoPin);
+  penServo.write(penZUp);
+  delay(200);
+  // Decrease if necessary
+  myStepperX.setSpeed(vitesseDeplacement);
+  myStepperY.setSpeed(vitesseDeplacement);
+
   cadena = "";
 
-  Serial.begin(115200);//Serial connection
-  myserial.begin(9600);
+  Serial.begin(9600);//Serial connection
+  Serial1.begin(9600);
+  //myserial.begin(9600);
 
   tft.reset();
   tft.begin(0x9341); // SDFP5408
@@ -141,117 +171,378 @@ void setup(void) {
 
   pinMode(13, OUTPUT);
 }
-
-#define MINPRESSURE 10
-#define MAXPRESSURE 1000
-
 void loop()
 {
 
-  if (Serial.available()) {
-    Serial.print(Serial.read());
-    return;
-  } else{
-    //Serial.println("no sirvio");
-  }
-
-  digitalWrite(13, HIGH);
-  TSPoint p = ts.getPoint();
-  digitalWrite(13, LOW);
-
-  // if sharing pins, you'll need to fix the directions of the touchscreen pins
-  //pinMode(XP, OUTPUT);
-  pinMode(XM, OUTPUT);
-  pinMode(YP, OUTPUT);
-  //pinMode(YM, OUTPUT);
-
-  // we have some minimum pressure we consider 'valid'
-  // pressure of 0 means no pressing!
-
-  if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
-    // scale from 0->1023 to tft.width
-
-    // *** SPFD5408 change -- Begin
-    // Bug in in original code
-    //p.x = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
-    p.x = map(p.x, TS_MAXX, TS_MINX, 0, tft.width());
-    // *** SPFD5408 change -- End
-    p.y = map(p.y - 50, TS_MINY, TS_MAXY, 0, tft.height());
-
-    /*
-      Serial.print("("); Serial.print(p.x);
-      Serial.print(", "); Serial.print(p.y);
-      Serial.println(")");
-    */
-    if (p.y < BOXSIZE) {
-      oldcolor = currentcolor;
-
-      if (p.x < BOXSIZE) {
-        currentcolor = BLACK;
-        tft.drawRect(0, 0, BOXSIZE, BOXSIZE, WHITE);
-      } else if (p.x < BOXSIZE * 2) {
-        currentcolor = BLUE;
-        tft.drawRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, WHITE);
-      } else if (p.x < BOXSIZE * 3) {
-        currentcolor = RED;
-        tft.drawRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, WHITE);
-      }
-
-      if (oldcolor != currentcolor) {
-        if (oldcolor == BLACK) tft.fillRect(0, 0, BOXSIZE, BOXSIZE, BLACK);
-        if (oldcolor == BLUE) tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, BLUE);
-        if (oldcolor == RED) tft.fillRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, RED);
-      }
-      //PRESIONAR EL BOTON DE IMPRIMIR
-      if (p.x > BOXSIZE * 3 && p.x < tft.width()) {
-        //Hacer la peticion al web service
-        //Serial.println(F("SE PRESIONO IMPRIMIR"));
-        //Serial.println(cadena);
-        //if(cadena!=""){
-        PostReq(cadena);
-        //cadena="";
-        //}
-
-      }
-
+  //Serial.println(Serial1.available());
+  if (Serial1.available() > 0) {
+    post = Serial1.readString();
+    Serial.println(post);
+    for (int i = 0; i < post.length(); ++i)
+    {
+      interprete(post.charAt(i));
     }
-    if (((p.y - PENRADIUS) > BOXSIZE) && ((p.y + PENRADIUS) < tft.height())) {
-      tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
-      cadena = cadena  + p.x + "," + p.y + ";";
+    //interprete(Serial1.read());
+    //Serial.println(Serial1.readString());
+  } else {
+    digitalWrite(13, HIGH);
+    TSPoint p = ts.getPoint();
+    digitalWrite(13, LOW);
+
+    // if sharing pins, you'll need to fix the directions of the touchscreen pins
+    //pinMode(XP, OUTPUT);
+    pinMode(XM, OUTPUT);
+    pinMode(YP, OUTPUT);
+    //pinMode(YM, OUTPUT);
+
+    // we have some minimum pressure we consider 'valid'
+    // pressure of 0 means no pressing!
+
+    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+      // scale from 0->1023 to tft.width
+
+      // *** SPFD5408 change -- Begin
+      // Bug in in original code
+      //p.x = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
+      p.x = map(p.x, TS_MAXX, TS_MINX, 0, tft.width());
+      // *** SPFD5408 change -- End
+      p.y = map(p.y - 50, TS_MINY, TS_MAXY, 0, tft.height());
+
+      if (p.y < BOXSIZE) {
+        oldcolor = currentcolor;
+
+        if (p.x < BOXSIZE) {
+          currentcolor = BLACK;
+          tft.drawRect(0, 0, BOXSIZE, BOXSIZE, WHITE);
+        } else if (p.x < BOXSIZE * 2) {
+          currentcolor = BLUE;
+          tft.drawRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, WHITE);
+        } else if (p.x < BOXSIZE * 3) {
+          currentcolor = RED;
+          tft.drawRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, WHITE);
+        }
+
+        if (oldcolor != currentcolor) {
+          if (oldcolor == BLACK) tft.fillRect(0, 0, BOXSIZE, BOXSIZE, BLACK);
+          if (oldcolor == BLUE) tft.fillRect(BOXSIZE, 0, BOXSIZE, BOXSIZE, BLUE);
+          if (oldcolor == RED) tft.fillRect(BOXSIZE * 2, 0, BOXSIZE, BOXSIZE, RED);
+        }
+        //PRESIONAR EL BOTON DE IMPRIMIR
+        if (p.x > BOXSIZE * 3 && p.x < tft.width()) {
+          //Hacer la peticion al web service
+          Serial.println(F("SE PRESIONO IMPRIMIR"));
+          PostReq(cadena);
+
+        }
+
+      }
+      if (((p.y - PENRADIUS) > BOXSIZE) && ((p.y + PENRADIUS) < tft.height())) {
+        tft.fillCircle(p.x, p.y, PENRADIUS, currentcolor);
+        cadena = cadena  + p.x + "," + p.y + ";";
+      }
     }
   }
 }
 
 void PostReq(String coordenadas) {
 
-  coordenadas = "&" + coordenadas + "&";
   int str_len = coordenadas.length() + 1;
   char char_array[str_len];
 
-  // Copy it over
-
   coordenadas.toCharArray(char_array, str_len);
+  Serial1.println(coordenadas);
   //myserial.write(char_array);
-  myserial.print(coordenadas);
+  Serial.print(coordenadas);
   //coordenadas = "";
-  /*if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
+}
 
-    HTTPClient http;    //Declare object of class HTTPClient
 
-    http.begin("http://192.168.1.88:8085/hello");      //Specify request destination
-    http.addHeader("Content-Type", "text/plain");  //Specify content-type header
 
-    int httpCode = http.POST(cadena);   //Send the request
-    String payload = http.getString();                  //Get the response payload
+void interprete(char c) {
+  
+  
 
-    Serial.println(httpCode);   //Print HTTP return code
-    Serial.println(payload);    //Print request response payload
+  lineIndex = 0;
+  lineSemiColon = false;
+  lineIsComment = false;
 
-    http.end();  //Close connection
+  //int salir = 0;
+  //while (salir == 0) {
+    // Serial reception - Mostly from Grbl, added semicolon support
+    //while ( Serial.available() > 0 ) { // Lee del WIFI<--------------------------------------------------------------------
+      //c = Serial1.read();
+      //c = 's';
+      //Serial.println(c);
+      if (( c == '\n') || (c == '\r') ) {             // End of line reached
+        if ( lineIndex > 0 ) {                        // Line is complete. Then execute!
+          line[ lineIndex ] = '\0';                   // Terminate string
+          if (verbose) {
+            //Serial.print( "Received : ");
+            //Serial.println( line );
+          }
+          processIncomingLine( line, lineIndex );//La linea se manda analizar<---------------------------------------------
+          lineIndex = 0;
+        }
+        else {
+          // Empty or comment line. Skip block.
+        }
+        lineIsComment = false;
+        lineSemiColon = false;
+        //Serial.println("ok");
+      }
+      else {
+        if ( (lineIsComment) || (lineSemiColon) ) {   // Throw away all comment characters
+          if ( c == ')' )  lineIsComment = false;     // End of comment. Resume line.
+        }
+        else {
+          if ( c <= ' ' ) {                           // Throw away whitepace and control characters
+          }
+          else if ( c == '/' ) {                    // Block delete not supported. Ignore character.
+          }
+          else if ( c == '(' ) {                    // Enable comments flag and ignore all characters until ')' or EOL.
+            lineIsComment = true;
+          }
+          else if ( c == ';' ) {
+            lineSemiColon = true;
+          }
+          else if ( lineIndex >= LINE_BUFFER_LENGTH - 1 ) {
+            //Serial.println( "ERROR - lineBuffer overflow" );
+            lineIsComment = false;
+            lineSemiColon = false;
+          }
+          else if ( c >= 'a' && c <= 'z' ) {        // Upcase lowercase
+            line[ lineIndex++ ] = c - 'a' + 'A';
+          }
+          else if ( c == '$') {
+            //Serial.println("Saliendo");
+            //salir = 1;
+            return;
+          }
+          else {
+            line[ lineIndex++ ] = c;
+          }
+        }
+      }
+      delay(1);
+    //}
+  //}
+}
 
-    }else{
+void processIncomingLine( char* line, int charNB ) {
+  //Serial.println("Procesando");
+  int currentIndex = 0;
+  char buffer[ 64 ];                                 // Hope that 64 is enough for 1 parameter
+  struct point newPos;
 
-    Serial.println("Error in WiFi connection");
+  newPos.x = 0.0;
+  newPos.y = 0.0;
 
-    }*/
+  //  Needs to interpret
+  //  G1 for moving
+  //  G4 P300 (wait 150ms)
+  //  G1 X60 Y30
+  //  G1 X30 Y50
+  //  M300 S30 (pen down)
+  //  M300 S50 (pen up)
+  //  Discard anything with a (
+  //  Discard any other command!
+
+  while ( currentIndex < charNB ) {
+    switch ( line[ currentIndex++ ] ) {              // Select command, if any
+      case 'U':
+        penUp();
+        break;
+      case 'D':
+        penDown();
+        break;
+      case 'G':
+        buffer[0] = line[ currentIndex++ ];          // /!\ Dirty - Only works with 2 digit commands
+        //      buffer[1] = line[ currentIndex++ ];
+        //      buffer[2] = '\0';
+        buffer[1] = '\0';
+
+        switch ( atoi( buffer ) ) {                  // Select G command
+          case 0:                                   // G00 & G01 - Movement or fast movement. Same here
+          case 1:
+            // /!\ Dirty - Suppose that X is before Y
+            char* indexX = strchr( line + currentIndex, 'X' ); // Get X/Y position in the string (if any)
+            char* indexY = strchr( line + currentIndex, 'Y' );
+            if ( indexY <= 0 ) {
+              newPos.x = atof( indexX + 1);
+              newPos.y = actuatorPos.y;
+            }
+            else if ( indexX <= 0 ) {
+              newPos.y = atof( indexY + 1);
+              newPos.x = actuatorPos.x;
+            }
+            else {
+              newPos.y = atof( indexY + 1);
+              indexY = '\0';
+              newPos.x = atof( indexX + 1);
+            }
+            drawLine(newPos.x, newPos.y );
+            //        Serial.println("ok");
+            actuatorPos.x = newPos.x;
+            actuatorPos.y = newPos.y;
+            break;
+        }
+        break;
+      case 'M':
+        buffer[0] = line[ currentIndex++ ];        // /!\ Dirty - Only works with 3 digit commands
+        buffer[1] = line[ currentIndex++ ];
+        buffer[2] = line[ currentIndex++ ];
+        buffer[3] = '\0';
+        switch ( atoi( buffer ) ) {
+          case 300:
+            {
+              char* indexS = strchr( line + currentIndex, 'S' );
+              float Spos = atof( indexS + 1);
+              //          Serial.println("ok");
+              if (Spos == 30) {
+                penDown();
+              }
+              if (Spos == 50) {
+                penUp();
+              }
+              break;
+            }
+          case 114:                                // M114 - Repport position
+            //Serial.print( "Absolute position : X = " );
+            //Serial.print( actuatorPos.x );
+            //Serial.print( "  -  Y = " );
+            //Serial.println( actuatorPos.y );
+            break;
+          default:
+            //Serial.print( "Command not recognized : M");
+            //Serial.println( buffer );
+            break;
+        }
+    }
+  }
+}
+
+void drawLine(float x1, float y1) {
+
+  if (verbose)
+  {
+    //Serial.print("fx1, fy1: ");
+    //Serial.print(x1);
+    //Serial.print(",");
+    //Serial.print(y1);
+    //Serial.println("");
+  }
+
+  //  Bring instructions within limits
+  if (x1 >= Xmax) {
+    x1 = Xmax;
+  }
+  if (x1 <= Xmin) {
+    x1 = Xmin;
+  }
+  if (y1 >= Ymax) {
+    y1 = Ymax;
+  }
+  if (y1 <= Ymin) {
+    y1 = Ymin;
+  }
+
+  if (verbose)
+  {
+    //Serial.print("Xpos, Ypos: ");
+    //Serial.print(Xpos);
+    //Serial.print(",");
+    //Serial.print(Ypos);
+    //Serial.println("");
+  }
+
+  if (verbose)
+  {
+    //Serial.print("x1, y1: ");
+    //Serial.print(x1);
+    //Serial.print(",");
+    //Serial.print(y1);
+    //Serial.println("");
+  }
+
+  //  Convert coordinates to steps
+  x1 = (int)(x1 * StepsPerMillimeterX);
+  y1 = (int)(y1 * StepsPerMillimeterY);
+  float x0 = Xpos;
+  float y0 = Ypos;
+
+  //  Let's find out the change for the coordinates
+  long dx = abs(x1 - x0);
+  long dy = abs(y1 - y0);
+  int sx = x0 < x1 ? StepInc : -StepInc;
+  int sy = y0 < y1 ? StepInc : -StepInc;
+
+  long i;
+  long over = 0;
+
+  if (dx > dy) {
+    for (i = 0; i < dx; ++i) {
+      myStepperX.step(sx);
+      over += dy;
+      if (over >= dx) {
+        over -= dx;
+        myStepperY.step(sy);
+      }
+      delay(StepDelay);
+    }
+  }
+  else {
+    for (i = 0; i < dy; ++i) {
+      myStepperY.step(sy);
+      over += dx;
+      if (over >= dy) {
+        over -= dy;
+        myStepperX.step(sx);
+      }
+      delay(StepDelay);
+    }
+  }
+
+  if (verbose)
+  {
+    //Serial.print("dx, dy:");
+    //Serial.print(dx);
+    //Serial.print(",");
+    //Serial.print(dy);
+    //Serial.println("");
+  }
+
+  if (verbose)
+  {
+    //Serial.print("Going to (");
+    //Serial.print(x0);
+    //Serial.print(",");
+    //Serial.print(y0);
+    //Serial.println(")");
+  }
+
+  //  Delay before any next lines are submitted
+  delay(LineDelay);
+  //  Update the positions
+  Xpos = x1;
+  Ypos = y1;
+}
+
+//  Raises pen
+void penUp() {
+  penServo.write(penZUp);
+  delay(LineDelay);
+  Zpos = Zmax;
+  if (verbose) {
+    //Serial.println("Pen up!");
+  }
+}
+
+//  Lowers pen
+void penDown() {
+  penServo.write(penZDown);
+  delay(LineDelay);
+  Zpos = Zmin;
+  if (verbose) {
+    //Serial.println("Pen down.");
+  }
 }
